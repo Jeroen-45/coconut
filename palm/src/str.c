@@ -11,6 +11,33 @@
 
 /*******************************************************************************
  *
+ * Description: Allocate managed memory for a new string.
+ *
+ * Parameters: - len, the length of the string to be allocated
+ *                    in terms of characters, excluding the null terminator
+ *
+ * Return: - newly allocated string
+ *
+ *******************************************************************************/
+char *STRmalloc(size_t len) {
+    return MEMmallocWithHeader(sizeof(char) * (len + 1), MEM_TYPE_STR);
+}
+
+/*******************************************************************************
+ *
+ * Description: Free managed memory of the given string.
+ *
+ * Parameters: - ptr, pointer to the string to be freed
+ *
+ * Return: - Returns NULL, but allows to do assignment to freed structure
+ *
+ *******************************************************************************/
+char *STRfree(char *ptr) {
+    return (char *)MEMfreeWithHeader(ptr);
+}
+
+/*******************************************************************************
+ *
  * Description: Copy string and allocate memory for new string.
  *
  * Parameters: - source, string to copy

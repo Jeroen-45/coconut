@@ -22,3 +22,4 @@ void CCNsetCycles(size_t cycle_count);
 void CCNsetVerbosity(enum pd_verbosity type);
 void CCNsetTreeCheck(bool enable);
 void CCNshowTree();
+char *CCNgetCurrentActionName();

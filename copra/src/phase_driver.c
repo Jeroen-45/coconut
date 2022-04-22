@@ -11,6 +11,7 @@
 #include "ccn/dynamic_core.h"
 #include "ccngen/action_handling.h"
 #include "palm/ctinfo.h"
+#include "palm/memory.h"
 #include "ccn/phase_driver.h"
 
 
@@ -27,6 +28,7 @@ struct phase_driver {
     bool tree_check;
     struct ccn_phase *current_phase;
     char *breakpoint;
+    char *current_action_name;
 };
 
 static struct phase_driver phase_driver = {
@@ -42,6 +44,7 @@ static struct phase_driver phase_driver = {
     .tree_check = true,
     .verbosity = PD_V_QUIET,
     .breakpoint = NULL,
+    .current_action_name = NULL,
 };
 
 static void resetPhaseDriver()
@@ -53,6 +56,7 @@ static void resetPhaseDriver()
     phase_driver.fixed_point = false;
     phase_driver.action_error = false;
     phase_driver.phase_error = false;
+    phase_driver.phase_error = NULL;
 }
 
 static struct ccn_node *StartPhase(struct ccn_phase *phase, char *phase_name, struct ccn_node *node);
@@ -61,6 +65,7 @@ extern void BreakpointHandler(node_st *node);
 
 struct ccn_node *CCNdispatchAction(struct ccn_action *action, enum ccn_nodetype root_type, struct ccn_node *node,
                           bool is_root) {
+    phase_driver.current_action_name = action->name;
     phase_driver.action_id++;
     // Needed to break after a phase with action ids.
     size_t start_id = phase_driver.action_id;
@@ -116,6 +121,8 @@ struct ccn_node *CCNdispatchAction(struct ccn_action *action, enum ccn_nodetype 
     if (action->type == CCN_ACTION_PHASE && phase_driver.verbosity > PD_V_QUIET) {
         fprintf(stderr, "<< %s\n", action->name);
     }
+
+    phase_driver.current_action_name = NULL;
 
     (void)root_type;
     (void)is_root;
@@ -293,6 +300,7 @@ void CCNsetTreeCheck(bool enable)
  */
 void CCNrun(struct ccn_node *node)
 {
+    MEMsetCurrentActionNameFunction(&CCNgetCurrentActionName);
     resetPhaseDriver();
     node = CCNdispatchAction(CCNgetActionFromID(CCN_ROOT_ACTION), CCN_ROOT_TYPE, node, false);
     TRAVstart(node, TRAV_free);
@@ -335,4 +343,11 @@ size_t ShowTree(struct ccn_action *curr, size_t id, int indent)
 void CCNshowTree()
 {
     ShowTree(CCNgetActionFromID(CCN_ROOT_ACTION), 1, -1);
+}
+
+/**
+ * Returns the name of the current action(pass or traversal).
+ */
+char *CCNgetCurrentActionName() {
+    return phase_driver.current_action_name;
 }

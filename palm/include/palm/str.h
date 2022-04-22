@@ -1,7 +1,10 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
 
+extern char *STRmalloc(size_t len);
+extern char *STRfree(char *ptr);
 extern char *STRcpy(const char *source);
 extern char *STRncpy(const char *source, int maxlen);
 extern char *STRcat(const char *first, const char* second);

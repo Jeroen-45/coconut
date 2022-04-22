@@ -5,7 +5,28 @@
 
 #include "palm/dbug.h"
 #include "palm/ctinfo.h"
+#include "palm/str.h"
 
+
+struct mem_header {
+    bool mark;
+    enum mem_type type;
+    char *allocate_action_name;
+};
+
+/* Set default function getCurrentActionName */
+char *actionNameUnknown() {
+    return STRcpy("Unknown");
+}
+char *(*getCurrentActionName)() = actionNameUnknown;
+
+/**
+ * Set the Current Action Name Function object
+ * @param f The function to be used for retrieving the current action name
+ */
+void MEMsetCurrentActionNameFunction(char *(*f)()) {
+    getCurrentActionName = f;
+}
 
 /**
  * Allocate memory. If memory can not be allocated this function
@@ -38,6 +59,33 @@ void *MEMmalloc(size_t size)
 }
 
 /**
+ * Allocate managed memory with a header containing extra details added in
+ * @param size Amount to allocate.
+ * @param type The memory type being allocated.
+ * @return A pointer to an allocated structure.
+ */
+void *MEMmallocWithHeader(size_t size, enum mem_type type)
+{
+    /*
+    * Allocate enough memory for the requested size
+    * with a mem_header in front of it
+    */
+    struct mem_header *ptr = MEMmalloc(size + sizeof(struct mem_header));
+
+    /* Set the mem_header values */
+    ptr->mark = false;
+    ptr->type = type;
+    ptr->allocate_action_name = getCurrentActionName();
+    printf("Allocation with header done from: %s\n", ptr->allocate_action_name);
+
+    /* Add address to list of managed addresses */
+    // TODO
+
+    /* Return the pointer to the memory after the header */
+    return (void *)ptr + sizeof(struct mem_header);
+}
+
+/**
  * Free memory. Returns NULL, but allows to do assignment to freed structure.
  * @param address address to free.
  */
@@ -49,6 +97,19 @@ void *MEMfree(void *address)
     }
 
     return address;
+}
+
+/**
+ * Free managed memory.
+ * Returns NULL, but allows to do assignment to freed structure.
+ * @param address address to freed.
+ */
+void *MEMfreeWithHeader(void *address) {
+    /* Remove address from list of managed addresses */
+    // TODO
+
+    /* Free memory, including header */
+    return MEMfree(address - sizeof(struct mem_header));
 }
 
 void *MEMcopy(size_t size, void *mem)
