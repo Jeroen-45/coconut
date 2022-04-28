@@ -10,6 +10,8 @@ enum mem_type {
 };
 
 extern void MEMsetCurrentActionNameFunction(char *(*f)());
+extern void MEMmanagerInit();
+extern void MEMmanagerCleanup();
 extern void *MEMmalloc(size_t size);
 extern void *MEMmallocWithHeader(size_t size, enum mem_type type);
 extern void *MEMfree(void *address);

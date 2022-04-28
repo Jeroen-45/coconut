@@ -300,10 +300,17 @@ void CCNsetTreeCheck(bool enable)
  */
 void CCNrun(struct ccn_node *node)
 {
+    /* Initialize the memory manager */
+    MEMmanagerInit();
     MEMsetCurrentActionNameFunction(&CCNgetCurrentActionName);
+
+    /* Perform the compiler invocation */
     resetPhaseDriver();
     node = CCNdispatchAction(CCNgetActionFromID(CCN_ROOT_ACTION), CCN_ROOT_TYPE, node, false);
     TRAVstart(node, TRAV_free);
+
+    /* Cleanup memory manager data */
+    MEMmanagerCleanup();
 }
 
 size_t CCNgetCurrentActionId()

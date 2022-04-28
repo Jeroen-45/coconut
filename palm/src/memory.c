@@ -6,10 +6,12 @@
 #include "palm/dbug.h"
 #include "palm/ctinfo.h"
 #include "palm/str.h"
+#include "palm/linked_list.h"
 
 
 struct mem_manager {
     char *(*getCurrentActionName)();
+    linked_list_st *allocations_list;
 };
 
 /* Default function getCurrentActionName */
@@ -19,6 +21,7 @@ char *actionNameUnknown() {
 
 static struct mem_manager mem_manager = {
     .getCurrentActionName = actionNameUnknown,
+    .allocations_list = NULL,
 };
 
 struct mem_header {
@@ -33,6 +36,20 @@ struct mem_header {
  */
 void MEMsetCurrentActionNameFunction(char *(*f)()) {
     mem_manager.getCurrentActionName = f;
+}
+
+/**
+ * Initialise the memory manager
+ */
+void MEMmanagerInit() {
+    mem_manager.allocations_list = LLnew();
+}
+
+/**
+ * Cleanup memory manager data
+ */
+void MEMmanagerCleanup() {
+    LLdelete(mem_manager.allocations_list);
 }
 
 /**
@@ -86,7 +103,7 @@ void *MEMmallocWithHeader(size_t size, enum mem_type type)
     printf("Allocation with header done from: %s\n", ptr->allocate_action_name);
 
     /* Add address to list of managed addresses */
-    // TODO
+    LLadd(mem_manager.allocations_list, ptr);
 
     /* Return the pointer to the memory after the header */
     return (void *)ptr + sizeof(struct mem_header);
@@ -113,7 +130,7 @@ void *MEMfree(void *address)
  */
 void *MEMfreeWithHeader(void *address) {
     /* Remove address from list of managed addresses */
-    // TODO
+    LLremove(mem_manager.allocations_list, address - sizeof(struct mem_header));
 
     /* Free memory, including header */
     return MEMfree(address - sizeof(struct mem_header));
