@@ -8,24 +8,31 @@
 #include "palm/str.h"
 
 
+struct mem_manager {
+    char *(*getCurrentActionName)();
+};
+
+/* Default function getCurrentActionName */
+char *actionNameUnknown() {
+    return STRcpy("Unknown");
+}
+
+static struct mem_manager mem_manager = {
+    .getCurrentActionName = actionNameUnknown,
+};
+
 struct mem_header {
     bool mark;
     enum mem_type type;
     char *allocate_action_name;
 };
 
-/* Set default function getCurrentActionName */
-char *actionNameUnknown() {
-    return STRcpy("Unknown");
-}
-char *(*getCurrentActionName)() = actionNameUnknown;
-
 /**
  * Set the Current Action Name Function object
  * @param f The function to be used for retrieving the current action name
  */
 void MEMsetCurrentActionNameFunction(char *(*f)()) {
-    getCurrentActionName = f;
+    mem_manager.getCurrentActionName = f;
 }
 
 /**
@@ -75,7 +82,7 @@ void *MEMmallocWithHeader(size_t size, enum mem_type type)
     /* Set the mem_header values */
     ptr->mark = false;
     ptr->type = type;
-    ptr->allocate_action_name = getCurrentActionName();
+    ptr->allocate_action_name = mem_manager.getCurrentActionName();
     printf("Allocation with header done from: %s\n", ptr->allocate_action_name);
 
     /* Add address to list of managed addresses */
