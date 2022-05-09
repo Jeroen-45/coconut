@@ -224,6 +224,7 @@ void *MEMfree(void *address)
 
 void *MEMcopy(size_t size, void *mem)
 {
+    printf("MEMcopy is used: it doesn't yet work fully with managed memory!\n");
     // TODO: Handle copying of managed memory
     void *result;
 
