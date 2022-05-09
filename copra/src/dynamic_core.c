@@ -2,6 +2,7 @@
 #include "ccn/ccn_types.h"
 #include <err.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "ccngen/ast.h"
 
@@ -23,6 +24,7 @@ void TRAVpush(enum ccn_traversal_type trav_type) {
     current_traversal = trav;
 
     ccn_trav_data_ft init_func = trav_data_init_vtable[trav_type];
+    // MEMsetCurrentHandlerName("Init");
     init_func(trav);
 }
 
@@ -33,6 +35,7 @@ void TRAVpop() {
     ccn_trav_st *prev = current_traversal->prev;
 
     ccn_trav_data_ft free_func = trav_data_free_vtable[current_traversal->trav_type];
+    // MEMsetCurrentHandlerName("Fini");
     free_func(current_traversal);
 
     MEMfree(current_traversal);
@@ -47,15 +50,19 @@ ccn_trav_st *TRAVgetCurrent(void) { return current_traversal; }
  * */
 struct ccn_node *TRAVdo(struct ccn_node *arg_node) {
     //assert(arg_node != NULL);
+    MEMsetCurrentHandlerName(NULL); // TODO: Set actual name
     ccn_trav_ft trav_func = ccn_trav_vtable[current_traversal->trav_type][NODE_TYPE(arg_node)];
     return trav_func(arg_node);
 }
 
 /* Start new traversal and push it to the traversal stack */
 struct ccn_node *TRAVstart(struct ccn_node *syntaxtree, enum ccn_traversal_type trav_type) {
+    bool temp_traversal_in_progress = MEMgetTraversalInProgress();
+    MEMsetTraversalInProgress(true);
     TRAVpush(trav_type);
     syntaxtree = TRAVopt(syntaxtree);
     TRAVpop();
+    MEMsetTraversalInProgress(temp_traversal_in_progress);
     return syntaxtree;
 }
 
@@ -73,7 +80,7 @@ struct ccn_node *TRAVopt(struct ccn_node *arg_node) {
 struct ccn_node *TRAVnop(struct ccn_node *arg_node) { return arg_node; }
 
 /**
- * Helper function that traverses all children in a node. 
+ * Helper function that traverses all children in a node.
  * This function assigns the result of the traversals to it respective child.
  * The order is determined by the order in the specification file.
  */
@@ -93,7 +100,13 @@ struct ccn_node *TRAVerror(struct ccn_node *arg_node) {
 
 struct ccn_node *PASSstart(struct ccn_node *syntaxtree, enum ccn_pass_type pass_type)
 {
-    return ccn_pass_vtable[pass_type](syntaxtree);
+    bool temp_traversal_in_progress = MEMgetTraversalInProgress();
+    MEMsetTraversalInProgress(true);
+    MEMsetCurrentHandlerName(NULL);
+    struct ccn_node *node = ccn_pass_vtable[pass_type](syntaxtree);
+    MEMsetTraversalInProgress(temp_traversal_in_progress);
+
+    return node;
 }
 
 struct ccn_node *PASSerror(struct ccn_node *arg_node) {
