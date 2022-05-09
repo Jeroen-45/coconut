@@ -3,6 +3,7 @@
  */
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include "palm/linked_list.h"
 
 #include "palm/memory.h"
@@ -55,8 +56,9 @@ void LLadd(struct linked_list *ll, void *data) {
  * Remove an entry from the linked list.
  * @param ll The linked list to remove from.
  * @param data The data to remove.
+ * @return true if the entry was found and removed, false otherwise.
  */
-void LLremove(struct linked_list *ll, void *data) {
+bool LLremove(struct linked_list *ll, void *data) {
     struct linked_list_entry *entry = ll->first;
     struct linked_list_entry *prev = NULL;
     while (entry != NULL) {
@@ -67,9 +69,11 @@ void LLremove(struct linked_list *ll, void *data) {
                 prev->next = entry->next;
             }
             MEMfree(entry);
-            return;
+            return true;
         }
         prev = entry;
         entry = entry->next;
     }
+
+    return false;
 }
