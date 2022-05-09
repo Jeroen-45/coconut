@@ -8,6 +8,10 @@
 #include "palm/str.h"
 #include "palm/linked_list.h"
 
+// Memory header access macros
+#define MEM_HEADER(data_ptr) ((struct mem_header *)(data_ptr - sizeof(struct mem_header)))
+#define MEM_DATA(header_ptr) ((void *)(header_ptr + sizeof(struct mem_header)))
+
 
 struct mem_manager {
     char *(*getCurrentActionName)();
@@ -106,7 +110,7 @@ void *MEMmallocWithHeader(size_t size, enum mem_type type)
     LLadd(mem_manager.allocations_list, ptr);
 
     /* Return the pointer to the memory after the header */
-    return (void *)ptr + sizeof(struct mem_header);
+    return MEM_DATA(ptr);
 }
 
 /**
@@ -130,10 +134,10 @@ void *MEMfree(void *address)
  */
 void *MEMfreeWithHeader(void *address) {
     /* Remove address from list of managed addresses */
-    LLremove(mem_manager.allocations_list, address - sizeof(struct mem_header));
+    LLremove(mem_manager.allocations_list, MEM_HEADER(address));
 
     /* Free memory, including header */
-    return MEMfree(address - sizeof(struct mem_header));
+    return MEMfree(MEM_HEADER(address));
 }
 
 void *MEMcopy(size_t size, void *mem)
