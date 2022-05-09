@@ -37,7 +37,7 @@ struct htable *HTnew(size_t size, hash_key_ft hash_func, is_equal_ft is_equal_fu
     struct htable *table = MEMmalloc(sizeof(struct htable));
     table->size = size;
     table->elements = 0;
-    table->entries = calloc(sizeof(struct htable_entry *), size);
+    table->entries = MEMcalloc(sizeof(struct htable_entry *), size);
     table->hash_f = hash_func;
     table->is_equal_f = is_equal_func;
 
@@ -99,7 +99,7 @@ bool HTinsert(struct htable *table, void *key, void *value)
 
 /**
  * Remove the key, value pair from the table.
- * 
+ *
  * @return the deleted value or NULL if key is not foound.
  */
 void *HTremove(htable_st *table, void *key)
@@ -224,7 +224,7 @@ void HTmapWithKey(struct htable *table, mapk_ft fun)
 }
 
 /**
- * Map function that passes an extra data parameter to the 
+ * Map function that passes an extra data parameter to the
  * map function
  */
 void HTmapWithDataAndKey(htable_st *table, void *data, mapdk_ft fun)
