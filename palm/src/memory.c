@@ -9,8 +9,8 @@
 #include "palm/linked_list.h"
 
 // Memory header access macros
-#define MEM_HEADER(data_ptr) ((struct mem_header *)(data_ptr - sizeof(struct mem_header)))
-#define MEM_DATA(header_ptr) ((void *)(header_ptr + sizeof(struct mem_header)))
+#define MEM_HEADER(data_ptr) (((struct mem_header *)(data_ptr) - 1))
+#define MEM_DATA(header_ptr) (((void *)header_ptr + sizeof(struct mem_header)))
 
 
 struct mem_manager {
