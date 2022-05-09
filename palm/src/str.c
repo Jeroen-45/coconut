@@ -20,7 +20,7 @@
  *
  *******************************************************************************/
 char *STRmalloc(size_t len) {
-    return MEMmallocWithHeader(sizeof(char) * (len + 1), MEM_TYPE_STR);
+    return MEMmallocWithType(sizeof(char) * (len + 1), MEM_TYPE_STR);
 }
 
 /*******************************************************************************
@@ -33,7 +33,7 @@ char *STRmalloc(size_t len) {
  *
  *******************************************************************************/
 char *STRfree(char *ptr) {
-    return (char *)MEMfreeWithHeader(ptr);
+    return (char *)MEMfree(ptr);
 }
 
 /*******************************************************************************
@@ -51,7 +51,7 @@ char *STRcpy(const char *source)
     char *ret;
 
     if (source != NULL) {
-        ret = (char *)MEMmalloc(sizeof(char) * (STRlen(source) + 1));
+        ret = (char *)STRmalloc(sizeof(char) * (STRlen(source) + 1));
         strcpy(ret, source);
     } else {
         ret = NULL;
@@ -121,7 +121,7 @@ char *STRsubStr(const char *string, int start, int len)
     if (start > strlen) {
         ret = STRnull();
     } else {
-        ret = memcpy(MEMmalloc(sizeof(char) * (len + 1)),
+        ret = memcpy(STRmalloc(sizeof(char) * (len + 1)),
             string + start, /* move to start of sub string */
             len);
         ret[len] = '\0';
@@ -141,7 +141,7 @@ char *STRnull()
 {
     char *ret = NULL;
 
-    ret = MEMmalloc(sizeof(char) * 1);
+    ret = STRmalloc(sizeof(char) * 1);
     ret[0] = '\0';
 
     return ret;
@@ -167,7 +167,7 @@ char *STRcat(const char *first, const char *second)
     } else if (second == NULL) {
         result = STRcpy(first);
     } else {
-        result = (char *)MEMmalloc(STRlen(first) + STRlen(second) + 1);
+        result = (char *)STRmalloc(STRlen(first) + STRlen(second) + 1);
 
         strcpy(result, first);
         strcat(result, second);
@@ -213,7 +213,7 @@ char *STRcatn(int n, ...)
     if (length == 0) {
         result = NULL;
     } else {
-        result = (char *)MEMmalloc(length + 1);
+        result = (char *)STRmalloc(length + 1);
         result[0] = '\0';
 
         va_start(arg_list, n);
@@ -539,7 +539,7 @@ char *STRitoa(int number)
     char *str;
     int num;
 
-    str = (char *)MEMmalloc(sizeof(int) * 4);
+    str = (char *)STRmalloc(sizeof(int) * 4);
     num = snprintf(str, (sizeof(int) * 4) - 1, "%d", number);
     DBUG_ASSERT(num < (sizeof(int) * 4) - 1, "Trouble in STRitoa");
 
@@ -574,7 +574,7 @@ char *STRsubstToken(const char *str, const char *token, const char *subst)
     }
 
     /* Make substitutions */
-    result = MEMmalloc((STRlen(str) + (occurrences * (STRlen(subst) - tlen)) + 1) * sizeof(char));
+    result = STRmalloc((STRlen(str) + (occurrences * (STRlen(subst) - tlen)) + 1) * sizeof(char));
 
     pos = result;
     while (*str != '\0') {
@@ -634,7 +634,7 @@ char *STRlower(const char *str)
         return NULL;
     }
 
-    char *ret = MEMmalloc(sizeof(char) * (STRlen(str) + 1));
+    char *ret = STRmalloc(sizeof(char) * (STRlen(str) + 1));
     char *pos = ret;
 
     while (*str != '\0') {
@@ -658,7 +658,7 @@ char *STRupper(const char *str)
         return NULL;
     }
 
-    char *ret = MEMmalloc(sizeof(char) * (STRlen(str) + 1));
+    char *ret = STRmalloc(sizeof(char) * (STRlen(str) + 1));
     char *pos = ret;
 
     while (*str != '\0') {
