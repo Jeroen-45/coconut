@@ -5,6 +5,7 @@
 
 
 enum mem_type {
+    MEM_TYPE_UNMANAGED,
     MEM_TYPE_UNKNOWN,
     MEM_TYPE_NODE,
     MEM_TYPE_NODE_DATA,
