@@ -223,12 +223,18 @@ void *MEMfree(void *address)
 
 void *MEMcopy(size_t size, void *mem)
 {
-    printf("MEMcopy is used: it doesn't yet work fully with managed memory!\n");
-    // TODO: Handle copying of managed memory
     void *result;
 
     result = MEMmalloc(size);
     result = memcpy(result, mem, size);
+
+    /* Copy type if mem and result are managed */
+    if (mem_manager.do_leak_detection && mem_manager.traversal_in_progress
+        && LLin(mem_manager.allocations_list, MEM_HEADER(mem))) {
+        struct mem_header *header = MEM_HEADER(mem);
+        struct mem_header *header_result = MEM_HEADER(result);
+        header_result->type = header->type;
+    }
 
     return result;
 }
