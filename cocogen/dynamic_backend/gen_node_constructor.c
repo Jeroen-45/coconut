@@ -34,8 +34,7 @@ node_st *DGNCinode(node_st *node)
     OUT_START_FUNC_FIELD();
     {
         OUT_FIELD("%s *node = NewNode()", basic_node_type);
-        OUT_FIELD("node->data.N_%s = MEMmalloc(sizeof(struct NODE_DATA_%s))", ID_LWR(INODE_NAME(node)), ID_UPR(INODE_NAME(node)));
-        // OUT_FIELD("node->data.N_%s = MEMmallocWithType(sizeof(struct NODE_DATA_%s), MEM_TYPE_NODE_DATA)", ID_LWR(INODE_NAME(node)), ID_UPR(INODE_NAME(node)));
+        OUT_FIELD("node->data.N_%s = MEMmallocWithType(sizeof(struct NODE_DATA_%s), MEM_TYPE_NODE_DATA)", ID_LWR(INODE_NAME(node)), ID_UPR(INODE_NAME(node)));
         OUT_FIELD("NODE_TYPE(node) = %s%s", "NT_", ID_UPR(INODE_NAME(node)));
 
 

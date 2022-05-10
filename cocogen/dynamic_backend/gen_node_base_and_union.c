@@ -17,8 +17,7 @@ node_st *dynamicGenBaseNodeInit(node_st *root)
 {
     GeneratorContext *ctx = globals.gen_ctx;
     OUT_START_FUNC("%s *NewNode()", basic_node_type);
-    OUT_FIELD("%s *node = MEMmalloc(sizeof(%s))", basic_node_type, basic_node_type);
-    // OUT_FIELD("%s *node = MEMmallocWithType(sizeof(%s), MEM_TYPE_NODE)", basic_node_type, basic_node_type);
+    OUT_FIELD("%s *node = MEMmallocWithType(sizeof(%s), MEM_TYPE_NODE)", basic_node_type, basic_node_type);
     OUT_FIELD("NODE_TYPE(node) = NT_NULL");
     OUT_FIELD("NODE_CHILDREN(node) = NULL");
     OUT_FIELD("NODE_FILENAME(node) = NULL");
