@@ -104,8 +104,9 @@ void *MEMmallocCallocGeneric(size_t size, size_t nitems, bool use_calloc)
         return NULL;
     }
 
-    /* Add space for header for leak detection if it is enabled */
-    if (mem_manager.do_leak_detection) {
+    /* Add header for leak detection if it is enabled
+     * and the allocation was made during a traversal */
+    if (mem_manager.traversal_in_progress && mem_manager.do_leak_detection) {
         size += sizeof(struct mem_header);
     }
 
@@ -125,24 +126,21 @@ void *MEMmallocCallocGeneric(size_t size, size_t nitems, bool use_calloc)
     }
 
     /* Set the mem_header values and update administrative structure
-     * if enabled and where appropriate */
-    if (mem_manager.do_leak_detection) {
+     * in case of managed allocation */
+    if (mem_manager.traversal_in_progress && mem_manager.do_leak_detection) {
         struct mem_header *header = (struct mem_header *)ptr;
-        if (mem_manager.traversal_in_progress) {
-            /* Set mem header values */
-            header->mark = false;
-            header->type = MEM_TYPE_UNKNOWN;
-            header->allocate_action_name = mem_manager.getCurrentActionName();
-            header->allocate_handler_name = mem_manager.current_handler_name;
 
-            /* Add address to list of managed addresses */
-            mem_manager.traversal_in_progress = false;
-            LLadd(mem_manager.allocations_list, ptr);
-            mem_manager.traversal_in_progress = true;
-        } else {
-            /* Set mem header type as unmanaged */
-            header->type = MEM_TYPE_UNMANAGED;
-        }
+        /* Set mem header values */
+        header->mark = false;
+        header->type = MEM_TYPE_UNKNOWN;
+        header->allocate_action_name = mem_manager.getCurrentActionName();
+        header->allocate_handler_name = mem_manager.current_handler_name;
+
+        /* Add address to list of managed addresses */
+        mem_manager.traversal_in_progress = false;
+        LLadd(mem_manager.allocations_list, ptr);
+        mem_manager.traversal_in_progress = true;
+
         /* Return pointer to data */
         ptr = MEM_DATA(header);
     }
@@ -202,39 +200,24 @@ void *MEMfree(void *address)
         return NULL;
     }
 
-    /* If leak detection is enabled, set the address to the header address */
-    if (mem_manager.do_leak_detection) {
+    /* If this free was called during a traversal and leak detection is
+     * enabled, set the address to the header address */
+    if (mem_manager.do_leak_detection && mem_manager.traversal_in_progress) {
         struct mem_header *header = MEM_HEADER(address);
 
-        printf("FREE START\n");
-        fflush(stdout);
-
-        if (header->type != MEM_TYPE_UNMANAGED) {
-            /* Remove address from list of managed addresses
-            * and check for double free */
-            bool in_progress_temp = mem_manager.traversal_in_progress;
-            mem_manager.traversal_in_progress = false;
-            printf("LLremove START\n");
-            fflush(stdout);
-            if (!LLremove(mem_manager.allocations_list, header)) {
-                printf("Double free of address %p in %s (allocated in %s with type %d)\n", header, mem_manager.getCurrentActionName(), header->allocate_action_name, header->type);
-                fflush(stdout);
-            }
-            printf("LLremove END\n");
-            fflush(stdout);
-            mem_manager.traversal_in_progress = in_progress_temp;
+        /* Remove address from list of managed addresses
+         * and check for double free */
+        mem_manager.traversal_in_progress = false;
+        if (!LLremove(mem_manager.allocations_list, header)) {
+            printf("Double free of address %p in %s (allocated in %s with type %d)\n", header, mem_manager.getCurrentActionName(), header->allocate_action_name, header->type);
         }
+        mem_manager.traversal_in_progress = true;
 
         address = (void *)header;
     }
 
-    printf("FREE FREE %p, type: %d\n", address, MEM_HEADER(address)->type);
-    fflush(stdout);
-
     /* Free the memory */
     free(address);
-    printf("FREE END\n");
-    fflush(stdout);
     address = NULL;
     return address;
 }
