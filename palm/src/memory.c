@@ -200,20 +200,19 @@ void *MEMfree(void *address)
         return NULL;
     }
 
-    /* If this free was called during a traversal and leak detection is
-     * enabled, set the address to the header address */
-    if (mem_manager.do_leak_detection && mem_manager.traversal_in_progress) {
+    /* Attempt to remove address from list of managed addresses
+     * if leak detection is enabled */
+    if (mem_manager.do_leak_detection) {
         struct mem_header *header = MEM_HEADER(address);
-
-        /* Remove address from list of managed addresses
-         * and check for double free */
+        bool in_progress_temp = mem_manager.traversal_in_progress;
         mem_manager.traversal_in_progress = false;
-        if (!LLremove(mem_manager.allocations_list, header)) {
-            printf("Double free of address %p in %s (allocated in %s with type %d)\n", header, mem_manager.getCurrentActionName(), header->allocate_action_name, header->type);
-        }
-        mem_manager.traversal_in_progress = true;
+        bool managed = LLremove(mem_manager.allocations_list, header);
+        mem_manager.traversal_in_progress = in_progress_temp;
 
-        address = (void *)header;
+        if (managed) {
+            /* Memory is managed, free from start of header */
+            address = (void *)header;
+        }
     }
 
     /* Free the memory */
