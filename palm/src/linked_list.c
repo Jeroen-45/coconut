@@ -77,3 +77,20 @@ bool LLremove(struct linked_list *ll, void *data) {
 
     return false;
 }
+
+/**
+ * Checks if the linked list contains the data.
+ * @param ll The linked list to search through.
+ * @param data The data to search for.
+ * @return true if the data is found, false otherwise.
+ */
+bool LLin(struct linked_list *ll, void *data) {
+    struct linked_list_entry *entry = ll->first;
+    while (entry != NULL) {
+        if (entry->data == data) {
+            return true;
+        }
+        entry = entry->next;
+    }
+    return false;
+}
