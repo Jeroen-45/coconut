@@ -204,12 +204,7 @@ void *MEMfree(void *address)
      * if leak detection is enabled */
     if (mem_manager.do_leak_detection) {
         struct mem_header *header = MEM_HEADER(address);
-        bool in_progress_temp = mem_manager.traversal_in_progress;
-        mem_manager.traversal_in_progress = false;
-        bool managed = LLremove(mem_manager.allocations_list, header);
-        mem_manager.traversal_in_progress = in_progress_temp;
-
-        if (managed) {
+        if (LLremove(mem_manager.allocations_list, header)) {
             /* Memory is managed, free from start of header */
             address = (void *)header;
         }
