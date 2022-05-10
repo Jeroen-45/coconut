@@ -206,35 +206,22 @@ void *MEMfree(void *address)
     if (mem_manager.do_leak_detection) {
         struct mem_header *header = MEM_HEADER(address);
 
-        printf("FREE START\n");
-        fflush(stdout);
-
         if (header->type != MEM_TYPE_UNMANAGED) {
             /* Remove address from list of managed addresses
             * and check for double free */
             bool in_progress_temp = mem_manager.traversal_in_progress;
             mem_manager.traversal_in_progress = false;
-            printf("LLremove START\n");
-            fflush(stdout);
             if (!LLremove(mem_manager.allocations_list, header)) {
                 printf("Double free of address %p in %s (allocated in %s with type %d)\n", header, mem_manager.getCurrentActionName(), header->allocate_action_name, header->type);
-                fflush(stdout);
             }
-            printf("LLremove END\n");
-            fflush(stdout);
             mem_manager.traversal_in_progress = in_progress_temp;
         }
 
         address = (void *)header;
     }
 
-    printf("FREE FREE %p, type: %d\n", address, MEM_HEADER(address)->type);
-    fflush(stdout);
-
     /* Free the memory */
     free(address);
-    printf("FREE END\n");
-    fflush(stdout);
     address = NULL;
     return address;
 }
