@@ -213,8 +213,7 @@ void *MEMfree(void *address)
             /* Memory is not managed, but traversal is in progress,
              * so this is either a double free or memory that wasn't
              * allocated with our functions when it should be. */
-            printf("Error: memory at address %p was not allocated by MEM or STR functions, or was already freed.\n", address);
-            fflush(stdout);
+            fprintf(stderr, "Error: memory at address %p was not allocated by MEM or STR functions, or was already freed.\n", address);
         }
         mem_manager.traversal_in_progress = in_progress_temp;
     }
