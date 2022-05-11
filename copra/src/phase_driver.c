@@ -309,8 +309,6 @@ void CCNrun(struct ccn_node *node)
     resetPhaseDriver();
     node = CCNdispatchAction(CCNgetActionFromID(CCN_ROOT_ACTION), CCN_ROOT_TYPE, node, false);
     phase_driver.current_action_name = "System traversal: Freeing of the AST";
-    printf("[coconut] TRAV_free starting\n");
-    fflush(stdout);
     TRAVstart(node, TRAV_free);
 
     /* Cleanup memory manager data */
