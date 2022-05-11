@@ -24,7 +24,7 @@ struct mem_manager {
 
 /* Default function getCurrentActionName */
 char *actionNameUnknown() {
-    return STRcpy("Unknown");
+    return "Unknown";
 }
 
 static struct mem_manager mem_manager = {
