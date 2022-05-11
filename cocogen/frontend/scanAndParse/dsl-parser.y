@@ -330,7 +330,7 @@ is_start: %empty
 
 pass: T_PASS id[name] '{'  info[information] ',' uid[identifier] ',' func[target_func]'}'
     {
-        $$ = ASTipass($name, $information);
+        $$ = ASTipass($name, STRcpy($information));
         IPASS_IPREFIX($$) = $identifier;
         IPASS_TARGET_FUNC($$) = $target_func;
     }
@@ -352,12 +352,12 @@ pass: T_PASS id[name] '{'  info[information] ',' uid[identifier] ',' func[target
     }
     | T_PASS id[name] '{'  info[information] ',' func[target_func]'}'
     {
-        $$ = ASTipass($name, $information);
+        $$ = ASTipass($name, STRcpy($information));
         IPASS_TARGET_FUNC($$) = $target_func;
     }
     | T_PASS id[name] '{'  info[information] ',' uid[identifier] '}'
     {
-        $$ = ASTipass($name, $information);
+        $$ = ASTipass($name, STRcpy($information));
         IPASS_IPREFIX($$) = $identifier;
     }
     | T_PASS id[name]
@@ -903,7 +903,7 @@ nodeset: T_NODESET id[name] '{' info[information] ',' T_NODES '=' setexpr[expr] 
 enum: T_ENUM id[name] '{' info[information] ',' prefix[identifier] ',' enumvalues[values] '}'
     {
 
-        $$ = ASTienum($values, $name, $identifier, $information);
+        $$ = ASTienum($values, $name, $identifier, STRcpy($information));
     }
     |  T_ENUM id[name] '{' prefix[identifier] ',' enumvalues[values] '}'
     {
@@ -1004,7 +1004,7 @@ uid: T_UID '=' id
 
 id: T_ID
     {
-        $$ = ASTid($1, STRlower($1), STRupper($1));
+        $$ = ASTid(STRcpy($1), STRlower($1), STRupper($1));
         ID_ROW($$) = @1.first_line;
         ID_COL_BEGIN($$) = @1.first_column;
         ID_COL_END($$) = @1.last_column;
