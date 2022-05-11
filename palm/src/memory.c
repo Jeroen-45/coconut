@@ -204,10 +204,19 @@ void *MEMfree(void *address)
      * if leak detection is enabled */
     if (mem_manager.do_leak_detection) {
         struct mem_header *header = MEM_HEADER(address);
+        bool in_progress_temp = mem_manager.traversal_in_progress;
+        mem_manager.traversal_in_progress = false;
         if (LLremove(mem_manager.allocations_list, header)) {
             /* Memory is managed, free from start of header */
             address = (void *)header;
+        } else if (in_progress_temp) {
+            /* Memory is not managed, but traversal is in progress,
+             * so this is either a double free or memory that wasn't
+             * allocated with our functions when it should be. */
+            printf("Error: memory at address %p was not allocated by MEM or STR functions, or was already freed.\n", address);
+            fflush(stdout);
         }
+        mem_manager.traversal_in_progress = in_progress_temp;
     }
 
     /* Free the memory */

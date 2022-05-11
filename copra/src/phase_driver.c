@@ -65,6 +65,7 @@ extern void BreakpointHandler(node_st *node);
 
 struct ccn_node *CCNdispatchAction(struct ccn_action *action, enum ccn_nodetype root_type, struct ccn_node *node,
                           bool is_root) {
+    // TODO: Handle TRAVstart/PASSstart being used directly to start another traversal/pass
     phase_driver.current_action_name = action->name;
     phase_driver.action_id++;
     // Needed to break after a phase with action ids.
@@ -307,6 +308,9 @@ void CCNrun(struct ccn_node *node)
     /* Perform the compiler invocation */
     resetPhaseDriver();
     node = CCNdispatchAction(CCNgetActionFromID(CCN_ROOT_ACTION), CCN_ROOT_TYPE, node, false);
+    phase_driver.current_action_name = "System traversal: Freeing of the AST";
+    printf("[coconut] TRAV_free starting\n");
+    fflush(stdout);
     TRAVstart(node, TRAV_free);
 
     /* Cleanup memory manager data */
