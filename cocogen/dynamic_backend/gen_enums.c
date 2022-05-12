@@ -15,6 +15,7 @@ static void do_enum(char *name, node_st *node, char *prefix)
         OUT_ENUM_FIELD("TRAV_free");
         OUT_ENUM_FIELD("TRAV_check");
         OUT_ENUM_FIELD("TRAV_cpy");
+        OUT_ENUM_FIELD("TRAV_CCN_mark");
     }
     OUT_ENUM_FIELD("_%sSIZE", prefix);
     OUT_ENUM_END();

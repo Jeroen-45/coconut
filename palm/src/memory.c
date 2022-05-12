@@ -241,3 +241,22 @@ void *MEMcopy(size_t size, void *mem)
 
     return result;
 }
+
+/**
+ * Mark an address as still being in use.
+ */
+void MEMmark(void *address) {
+    if (address == NULL) {
+        return;
+    }
+
+    /* Check whether the address is actually managed */
+    if (!LLin(mem_manager.allocations_list, address)) {
+        fprintf(stderr, "Error: memory found in the AST that was not allocated by MEM or STR functions.\n");
+        return;
+    }
+
+    /* Mark the address as being in use */
+    struct mem_header *header = MEM_HEADER(address);
+    header->mark = true;
+}
