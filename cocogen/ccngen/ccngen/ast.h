@@ -417,6 +417,7 @@ union NODE_DATA {
 #define NODE_TYPE(n) ((n)->nodetype)
 #define NODE_CHILDREN(n) ((n)->children)
 #define NODE_NUMCHILDREN(n) ((n)->num_children)
+#define NODE_FILENAME(n) ((n)->filename)
 #define NODE_BLINE(n) ((n)->begin_line)
 #define NODE_ELINE(n) ((n)->end_line)
 #define NODE_BCOL(n) ((n)->begin_col)
@@ -425,6 +426,7 @@ typedef struct ccn_node {
     enum ccn_nodetype nodetype;
     union NODE_DATA data;
     struct ccn_node **children;
+    char *filename;
     long int num_children;
     uint32_t begin_line;
     uint32_t end_line;

@@ -30,6 +30,7 @@ static char *uid_reserved[] = {
     "CPY",
     "CHK",
     "DEL",
+    "MARK",
 };
 
 void checkUID(node_st *id)

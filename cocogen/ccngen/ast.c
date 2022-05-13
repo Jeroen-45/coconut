@@ -1,9 +1,10 @@
 #include "ccngen/ast.h"
 #include "palm/memory.h"
 node_st *NewNode() {
-    node_st *node = MEMmalloc(sizeof(node_st));
+    node_st *node = MEMmallocWithType(sizeof(node_st), MEM_TYPE_NODE);
     NODE_TYPE(node) = NT_NULL;
     NODE_CHILDREN(node) = NULL;
+    NODE_FILENAME(node) = NULL;
     NODE_NUMCHILDREN(node) = 0;
     NODE_BLINE(node) = 0;
     NODE_ELINE(node) = 0;
@@ -14,7 +15,7 @@ node_st *NewNode() {
 
 node_st *ASTid(char * orig, char * lwr, char * Upr) {
     node_st *node = NewNode();
-    node->data.N_id = MEMmalloc(sizeof(struct NODE_DATA_ID));
+    node->data.N_id = MEMmallocWithType(sizeof(struct NODE_DATA_ID), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_ID;
     ID_NEXT(node) = NULL;
     ID_ORIG(node) = orig;
@@ -29,7 +30,7 @@ node_st *ASTid(char * orig, char * lwr, char * Upr) {
 
 node_st *ASTienum(node_st *vals, node_st *name, node_st *iprefix, char * iinfo) {
     node_st *node = NewNode();
-    node->data.N_ienum = MEMmalloc(sizeof(struct NODE_DATA_IENUM));
+    node->data.N_ienum = MEMmallocWithType(sizeof(struct NODE_DATA_IENUM), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_IENUM;
     IENUM_VALS(node) = vals;
     IENUM_NAME(node) = name;
@@ -42,7 +43,7 @@ node_st *ASTienum(node_st *vals, node_st *name, node_st *iprefix, char * iinfo) 
 
 node_st *ASTattribute() {
     node_st *node = NewNode();
-    node->data.N_attribute = MEMmalloc(sizeof(struct NODE_DATA_ATTRIBUTE));
+    node->data.N_attribute = MEMmallocWithType(sizeof(struct NODE_DATA_ATTRIBUTE), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_ATTRIBUTE;
     ATTRIBUTE_NAME(node) = NULL;
     ATTRIBUTE_TYPE_REFERENCE(node) = NULL;
@@ -56,7 +57,7 @@ node_st *ASTattribute() {
 
 node_st *ASTitravdata(node_st *name) {
     node_st *node = NewNode();
-    node->data.N_itravdata = MEMmalloc(sizeof(struct NODE_DATA_ITRAVDATA));
+    node->data.N_itravdata = MEMmallocWithType(sizeof(struct NODE_DATA_ITRAVDATA), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_ITRAVDATA;
     ITRAVDATA_NAME(node) = name;
     ITRAVDATA_TYPE_REFERENCE(node) = NULL;
@@ -69,7 +70,7 @@ node_st *ASTitravdata(node_st *name) {
 
 node_st *ASTsetoperation(node_st *left, node_st *right, enum setoperation_type type) {
     node_st *node = NewNode();
-    node->data.N_setoperation = MEMmalloc(sizeof(struct NODE_DATA_SETOPERATION));
+    node->data.N_setoperation = MEMmallocWithType(sizeof(struct NODE_DATA_SETOPERATION), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_SETOPERATION;
     SETOPERATION_LEFT(node) = left;
     SETOPERATION_RIGHT(node) = right;
@@ -80,7 +81,7 @@ node_st *ASTsetoperation(node_st *left, node_st *right, enum setoperation_type t
 
 node_st *ASTsetliteral(node_st *reference) {
     node_st *node = NewNode();
-    node->data.N_setliteral = MEMmalloc(sizeof(struct NODE_DATA_SETLITERAL));
+    node->data.N_setliteral = MEMmallocWithType(sizeof(struct NODE_DATA_SETLITERAL), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_SETLITERAL;
     SETLITERAL_REFERENCE(node) = reference;
     SETLITERAL_LEFT(node) = NULL;
@@ -91,7 +92,7 @@ node_st *ASTsetliteral(node_st *reference) {
 
 node_st *ASTsetreference() {
     node_st *node = NewNode();
-    node->data.N_setreference = MEMmalloc(sizeof(struct NODE_DATA_SETREFERENCE));
+    node->data.N_setreference = MEMmallocWithType(sizeof(struct NODE_DATA_SETREFERENCE), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_SETREFERENCE;
     SETREFERENCE_REFERENCE(node) = NULL;
     NODE_NUMCHILDREN(node) = 1;
@@ -100,7 +101,7 @@ node_st *ASTsetreference() {
 
 node_st *ASTste() {
     node_st *node = NewNode();
-    node->data.N_ste = MEMmalloc(sizeof(struct NODE_DATA_STE));
+    node->data.N_ste = MEMmallocWithType(sizeof(struct NODE_DATA_STE), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_STE;
     STE_NEXT(node) = NULL;
     STE_KEY(node) = NULL;
@@ -111,7 +112,7 @@ node_st *ASTste() {
 
 node_st *ASTchild(node_st *name) {
     node_st *node = NewNode();
-    node->data.N_child = MEMmalloc(sizeof(struct NODE_DATA_CHILD));
+    node->data.N_child = MEMmallocWithType(sizeof(struct NODE_DATA_CHILD), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_CHILD;
     CHILD_NAME(node) = name;
     CHILD_LIFETIMES(node) = NULL;
@@ -126,7 +127,7 @@ node_st *ASTchild(node_st *name) {
 
 node_st *ASTlifetime_range() {
     node_st *node = NewNode();
-    node->data.N_lifetime_range = MEMmalloc(sizeof(struct NODE_DATA_LIFETIME_RANGE));
+    node->data.N_lifetime_range = MEMmallocWithType(sizeof(struct NODE_DATA_LIFETIME_RANGE), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_LIFETIME_RANGE;
     LIFETIME_RANGE_TARGET(node) = NULL;
     LIFETIME_RANGE_INCLUSIVE(node) = false;
@@ -138,7 +139,7 @@ node_st *ASTlifetime_range() {
 
 node_st *ASTilifetime() {
     node_st *node = NewNode();
-    node->data.N_ilifetime = MEMmalloc(sizeof(struct NODE_DATA_ILIFETIME));
+    node->data.N_ilifetime = MEMmallocWithType(sizeof(struct NODE_DATA_ILIFETIME), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_ILIFETIME;
     ILIFETIME_BEGIN(node) = NULL;
     ILIFETIME_END(node) = NULL;
@@ -150,7 +151,7 @@ node_st *ASTilifetime() {
 
 node_st *ASTinodeset() {
     node_st *node = NewNode();
-    node->data.N_inodeset = MEMmalloc(sizeof(struct NODE_DATA_INODESET));
+    node->data.N_inodeset = MEMmallocWithType(sizeof(struct NODE_DATA_INODESET), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_INODESET;
     INODESET_NAME(node) = NULL;
     INODESET_EXPR(node) = NULL;
@@ -163,7 +164,7 @@ node_st *ASTinodeset() {
 
 node_st *ASTinode(node_st *name, char * iifno) {
     node_st *node = NewNode();
-    node->data.N_inode = MEMmalloc(sizeof(struct NODE_DATA_INODE));
+    node->data.N_inode = MEMmallocWithType(sizeof(struct NODE_DATA_INODE), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_INODE;
     INODE_NAME(node) = name;
     INODE_NEXT(node) = NULL;
@@ -179,7 +180,7 @@ node_st *ASTinode(node_st *name, char * iifno) {
 
 node_st *ASTipass(node_st *name, char * iifno) {
     node_st *node = NewNode();
-    node->data.N_ipass = MEMmalloc(sizeof(struct NODE_DATA_IPASS));
+    node->data.N_ipass = MEMmallocWithType(sizeof(struct NODE_DATA_IPASS), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_IPASS;
     IPASS_NAME(node) = name;
     IPASS_IPREFIX(node) = NULL;
@@ -192,7 +193,7 @@ node_st *ASTipass(node_st *name, char * iifno) {
 
 node_st *ASTitraversal(node_st *name) {
     node_st *node = NewNode();
-    node->data.N_itraversal = MEMmalloc(sizeof(struct NODE_DATA_ITRAVERSAL));
+    node->data.N_itraversal = MEMmallocWithType(sizeof(struct NODE_DATA_ITRAVERSAL), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_ITRAVERSAL;
     ITRAVERSAL_NAME(node) = name;
     ITRAVERSAL_IPREFIX(node) = NULL;
@@ -207,7 +208,7 @@ node_st *ASTitraversal(node_st *name) {
 
 node_st *ASTiphase(node_st *name, int is_start) {
     node_st *node = NewNode();
-    node->data.N_iphase = MEMmalloc(sizeof(struct NODE_DATA_IPHASE));
+    node->data.N_iphase = MEMmallocWithType(sizeof(struct NODE_DATA_IPHASE), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_IPHASE;
     IPHASE_NAME(node) = name;
     IPHASE_IPREFIX(node) = NULL;
@@ -223,7 +224,7 @@ node_st *ASTiphase(node_st *name, int is_start) {
 
 node_st *ASTiactions() {
     node_st *node = NewNode();
-    node->data.N_iactions = MEMmalloc(sizeof(struct NODE_DATA_IACTIONS));
+    node->data.N_iactions = MEMmallocWithType(sizeof(struct NODE_DATA_IACTIONS), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_IACTIONS;
     IACTIONS_REFERENCE(node) = NULL;
     IACTIONS_NEXT(node) = NULL;
@@ -234,7 +235,7 @@ node_st *ASTiactions() {
 
 node_st *ASTast() {
     node_st *node = NewNode();
-    node->data.N_ast = MEMmalloc(sizeof(struct NODE_DATA_AST));
+    node->data.N_ast = MEMmallocWithType(sizeof(struct NODE_DATA_AST), MEM_TYPE_NODE_DATA);
     NODE_TYPE(node) = NT_AST;
     AST_IPHASES(node) = NULL;
     AST_ITRAVERSALS(node) = NULL;

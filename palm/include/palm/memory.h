@@ -23,3 +23,4 @@ extern void *MEMmallocWithType(size_t size, enum mem_type type);
 extern void *MEMfree(void *address);
 extern void *MEMfreeWithHeader(void *address);
 extern void *MEMcopy(size_t size, void *mem);
+extern void MEMmark(void *address);
