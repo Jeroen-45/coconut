@@ -31,7 +31,7 @@ static struct mem_manager mem_manager = {
     .getCurrentActionName = actionNameUnknown,
     .allocations_list = NULL,
     .do_leak_detection = true,
-    .do_garbage_collection = true,
+    .do_garbage_collection = false,
     .traversal_in_progress = false,
     .current_handler_name = NULL,
 };
@@ -42,6 +42,24 @@ struct mem_header {
     char *allocate_action_name;
     char *allocate_handler_name;
 };
+
+/**
+ * Get name for memory type.
+ * @return A string representation of the given memory type
+ */
+char *MEMtypeToName(enum mem_type type) {
+    switch (type) {
+        case MEM_TYPE_NODE:
+            return "Node";
+        case MEM_TYPE_NODE_DATA:
+            return "Node Data";
+        case MEM_TYPE_STR:
+            return "String";
+        case MEM_TYPE_UNKNOWN:
+        default:
+            return "Unknown";
+    }
+}
 
 /**
  * Set the Current Action Name Function object
@@ -256,13 +274,13 @@ void MEMmark(void *address) {
     }
 
     /* Check whether the address is actually managed */
-    if (!LLin(mem_manager.allocations_list, address)) {
+    struct mem_header *header = MEM_HEADER(address);
+    if (!LLin(mem_manager.allocations_list, header)) {
         fprintf(stderr, "Error: memory found in the AST that was not allocated by MEM or STR functions.\n");
         return;
     }
 
     /* Mark the address as being in use */
-    struct mem_header *header = MEM_HEADER(address);
     header->mark = true;
 }
 
@@ -275,6 +293,16 @@ void MEMcheckSingleEntry(void *address) {
     if (!header->mark) {
         // TODO: expand reporting
         fprintf(stderr, "Error: memory leak detected.\n");
+        fprintf(stderr, "    Allocated in %s\n", header->allocate_action_name);
+        fprintf(stderr, "    Leaked in %s\n", mem_manager.getCurrentActionName());
+        fprintf(stderr, "    Type: %s\n", MEMtypeToName(header->type));
+        switch (header->type) {
+            case MEM_TYPE_STR:
+                fprintf(stderr, "        String value: `%s`\n", (char *)MEM_DATA(address));
+                break;
+            default:
+                break;
+        }
 
         if (mem_manager.do_garbage_collection) {
             MEMfree(MEM_DATA(header));
