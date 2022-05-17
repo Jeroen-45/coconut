@@ -8,3 +8,4 @@ void LLdelete(linked_list_st *ll);
 void LLadd(linked_list_st *ll, void *data);
 bool LLremove(linked_list_st *ll, void *data);
 bool LLin(struct linked_list *ll, void *data);
+void LLiterate(struct linked_list *ll, void (*func)(void *));

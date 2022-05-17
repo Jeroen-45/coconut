@@ -94,3 +94,14 @@ bool LLin(struct linked_list *ll, void *data) {
     }
     return false;
 }
+
+/**
+ * Iterate through the linked list and run the given function on each entry.
+ */
+void LLiterate(struct linked_list *ll, void (*func)(void *)) {
+    struct linked_list_entry *entry = ll->first;
+    while (entry != NULL) {
+        func(entry->data);
+        entry = entry->next;
+    }
+}

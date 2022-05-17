@@ -72,6 +72,11 @@ void MEMsetCurrentHandlerName(char *name) {
     mem_manager.current_handler_name = name;
 }
 
+/* Get do_leak_detection flag */
+bool MEMdoLeakDetection() {
+    return mem_manager.do_leak_detection;
+}
+
 /**
  * Initialise the memory manager
  */
@@ -259,4 +264,35 @@ void MEMmark(void *address) {
     /* Mark the address as being in use */
     struct mem_header *header = MEM_HEADER(address);
     header->mark = true;
+}
+
+/**
+ * Check whether an address is still in use, if not, report on the leak.
+ * @param address The address to check.
+ */
+void MEMcheckSingleEntry(void *address) {
+    struct mem_header *header = (struct mem_header *)address;
+    if (!header->mark) {
+        // TODO: expand reporting
+        fprintf(stderr, "Error: memory leak detected.\n");
+
+        if (mem_manager.do_garbage_collection) {
+            MEMfree(MEM_DATA(header));
+        }
+
+        bool in_progress_temp = mem_manager.traversal_in_progress;
+        mem_manager.traversal_in_progress = false;
+        LLremove(mem_manager.allocations_list, address);
+        mem_manager.traversal_in_progress = in_progress_temp;
+    } else {
+        header->mark = false;
+    }
+}
+
+/**
+ * Check if any addresses were leaked and report on them if they are.
+ */
+void MEMcheck() {
+    /* Traverse the list of managed addresses and check for any unmarked ones */
+    LLiterate(mem_manager.allocations_list, MEMcheckSingleEntry);
 }

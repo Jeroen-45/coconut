@@ -123,6 +123,11 @@ struct ccn_node *CCNdispatchAction(struct ccn_action *action, enum ccn_nodetype 
         fprintf(stderr, "<< %s\n", action->name);
     }
 
+    if (MEMdoLeakDetection()) {
+        TRAVstart(node, TRAV_CCN_mark);
+        MEMcheck();
+    }
+
     phase_driver.current_action_name = NULL;
 
     (void)root_type;
