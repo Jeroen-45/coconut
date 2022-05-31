@@ -53,7 +53,7 @@ node_st *RCBast(node_st *node)
 node_st *RCBitraversal(node_st *node)
 {
     trav_index = ITRAVERSAL_INDEX(node);
-    reachability_matrix[trav_index] = MEMmalloc(sizeof(int) * AST_NUM_NODES(ast));
+    reachability_matrix[trav_index] = MEMmallocUnmanaged(sizeof(int) * AST_NUM_NODES(ast));
     memset(reachability_matrix[trav_index], 0, sizeof(int) *AST_NUM_NODES(ast));
 
     if (!ITRAVERSAL_INODES(node)) {
