@@ -31,7 +31,7 @@ static struct mem_manager mem_manager = {
     .getCurrentActionName = actionNameUnknown,
     .allocations_list = NULL,
     .do_leak_detection = true,
-    .do_garbage_collection = false,
+    .do_garbage_collection = true,
     .traversal_in_progress = false,
     .current_handler_name = NULL,
 };
@@ -111,7 +111,7 @@ void MEMmanagerCleanup() {
 
 /**
  * Allocate memory using malloc or calloc. If memory can not be allocated
- * this function calls the CTIabortOufOfMemory function and exists.
+ * this function calls the CTIabortOufOfMemory function and exits.
  * @param size Amount to allocate.
  * @param nitems Number of items to allocate in case of calloc.
  * @param use_calloc When true, use calloc instead of malloc.
@@ -173,7 +173,7 @@ void *MEMmallocCallocGeneric(size_t size, size_t nitems, bool use_calloc)
 
 /**
  * Allocate memory using malloc. If memory can not be allocated
- * this function calls the CTIabortOufOfMemory function and exists.
+ * this function calls the CTIabortOufOfMemory function and exits.
  * @param size Amount to allocate.
  * @return A pointer to an allocated structure.
  */
@@ -182,14 +182,47 @@ void *MEMmalloc(size_t size) {
 }
 
 /**
+ * Allocate unmanaged memory using malloc. If memory can not be allocated
+ * this function calls the CTIabortOufOfMemory function and exits.
+ * @param size Amount to allocate.
+ * @return A pointer to an allocated structure.
+ */
+void *MEMmallocUnmanaged(size_t size) {
+    void *ptr;
+    bool temp = mem_manager.traversal_in_progress;
+
+    mem_manager.traversal_in_progress = false;
+    ptr = MEMmalloc(size);
+    mem_manager.traversal_in_progress = temp;
+    return ptr;
+}
+
+/**
  * Allocate memory using calloc. If memory can not be allocated
- * this function calls the CTIabortOufOfMemory function and exists.
- * @param size Size of individual item.
+ * this function calls the CTIabortOufOfMemory function and exits.
  * @param nitems Number of items to allocate.
+ * @param size Size of individual item.
  * @return A pointer to an allocated structure.
  */
 void *MEMcalloc(size_t nitems, size_t size) {
     return MEMmallocCallocGeneric(size, nitems, true);
+}
+
+/**
+ * Allocate unmanaged memory using calloc. If memory can not be allocated
+ * this function calls the CTIabortOufOfMemory function and exits.
+ * @param nitems Number of items to allocate.
+ * @param size Amount to allocate.
+ * @return A pointer to an allocated structure.
+ */
+void *MEMcallocUnmanaged(size_t nitems, size_t size) {
+    void *ptr;
+    bool temp = mem_manager.traversal_in_progress;
+
+    mem_manager.traversal_in_progress = false;
+    ptr = MEMcalloc(nitems, size);
+    mem_manager.traversal_in_progress = temp;
+    return ptr;
 }
 
 /**
@@ -291,23 +324,26 @@ void MEMmark(void *address) {
 void MEMcheckSingleEntry(void *address) {
     struct mem_header *header = (struct mem_header *)address;
     if (!header->mark) {
+        /* Report on leak */
         // TODO: expand reporting
-        fprintf(stderr, "Error: memory leak detected.\n");
-        fprintf(stderr, "    Allocated in %s\n", header->allocate_action_name);
-        fprintf(stderr, "    Leaked in %s\n", mem_manager.getCurrentActionName());
-        fprintf(stderr, "    Type: %s\n", MEMtypeToName(header->type));
+        // fprintf(stderr, "Error: memory leak detected.\n");
+        // fprintf(stderr, "    Allocated in %s\n", header->allocate_action_name);
+        // fprintf(stderr, "    Leaked in %s\n", mem_manager.getCurrentActionName());
+        // fprintf(stderr, "    Type: %s\n", MEMtypeToName(header->type));
         switch (header->type) {
             case MEM_TYPE_STR:
-                fprintf(stderr, "        String value: `%s`\n", (char *)MEM_DATA(address));
+                // fprintf(stderr, "        String value: `%s`\n", (char *)MEM_DATA(address));
                 break;
             default:
                 break;
         }
 
+        /* Free leaked memory if garbage collection is enabled */
         if (mem_manager.do_garbage_collection) {
             MEMfree(MEM_DATA(header));
         }
 
+        /* Remove memory from list of managed addresses */
         bool in_progress_temp = mem_manager.traversal_in_progress;
         mem_manager.traversal_in_progress = false;
         LLremove(mem_manager.allocations_list, address);

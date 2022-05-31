@@ -40,7 +40,7 @@ static node_st *ast;
 
 node_st *RCBast(node_st *node)
 {
-    reachability_matrix = MEMmalloc(sizeof(int *) * AST_NUM_TRAVERSALS(node) + 1);
+    reachability_matrix = MEMmallocUnmanaged(sizeof(int *) * AST_NUM_TRAVERSALS(node) + 1);
     child_visited = MEMmalloc(sizeof(int) * AST_NUM_NODES(node) + 1);
     ast = node;
     ste = AST_STABLE(node);
