@@ -2,69 +2,8 @@
 #include "ccn/dynamic_core.h"
 #include "ccn/phase_driver.h"
 #include "ccngen/ast.h"
+#include "ccngen/name_util.h"
 #include "palm/ctinfo.h"
-char *nodetypeToName(node_st *node) {
-    switch (NODE_TYPE(node)) {
-        case NT_ID:
-            return "id";
-            break;
-        case NT_IENUM:
-            return "ienum";
-            break;
-        case NT_ATTRIBUTE:
-            return "attribute";
-            break;
-        case NT_ITRAVDATA:
-            return "itravdata";
-            break;
-        case NT_SETOPERATION:
-            return "setoperation";
-            break;
-        case NT_SETLITERAL:
-            return "setliteral";
-            break;
-        case NT_SETREFERENCE:
-            return "setreference";
-            break;
-        case NT_STE:
-            return "ste";
-            break;
-        case NT_CHILD:
-            return "child";
-            break;
-        case NT_LIFETIME_RANGE:
-            return "lifetime_range";
-            break;
-        case NT_ILIFETIME:
-            return "ilifetime";
-            break;
-        case NT_INODESET:
-            return "inodeset";
-            break;
-        case NT_INODE:
-            return "inode";
-            break;
-        case NT_IPASS:
-            return "ipass";
-            break;
-        case NT_ITRAVERSAL:
-            return "itraversal";
-            break;
-        case NT_IPHASE:
-            return "iphase";
-            break;
-        case NT_IACTIONS:
-            return "iactions";
-            break;
-        case NT_AST:
-            return "ast";
-            break;
-        default:
-            return "Unknown";
-                }
-
-}
-
 static bool TypeIssetexpr(node_st *arg_node) {
     enum ccn_nodetype node_type = NODE_TYPE(arg_node);
     return (false || node_type == NT_SETOPERATION || node_type == NT_SETLITERAL || node_type == NT_SETREFERENCE    );

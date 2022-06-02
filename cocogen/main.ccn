@@ -92,6 +92,7 @@ phase dynamicBackend {
         dynamicGenActionsHeader;
         dynamicGenCopyTraversal;
         dynamicGenFreeTraversal;
+        dynamicGenNameUtilities;
         dynamicGenCheckTraversal;
         dynamicGenMarkTraversal;
         dynamicGenUserFiles;
@@ -247,6 +248,16 @@ traversal dynamicGenTravDataCtors {
 traversal dynamicGenTravDataStructs {
     uid = DGTDS,
     nodes = {ast, itraversal, itravdata}
+};
+
+traversal dynamicGenNameUtilities {
+    uid = DGNU,
+    nodes = {ast, inode, itraversal},
+
+    travdata {
+        string travid,
+        inode inodes
+    }
 };
 
 traversal dynamicGenCheckTraversal {

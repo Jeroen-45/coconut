@@ -61,6 +61,7 @@ enum ccn_traversal_type {
     TRAV_DGMT,
     TRAV_DGFT,
     TRAV_DGCHT,
+    TRAV_DGNU,
     TRAV_DGTDS,
     TRAV_DGTDC,
     TRAV_DGTDCH,

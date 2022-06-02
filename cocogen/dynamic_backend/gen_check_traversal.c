@@ -24,7 +24,6 @@ static node_st *ast;
 static node_st *curr_node;
 static node_st *curr_child;
 static node_st *curr_attribute;
-static bool gen_type_names;
 
 void DGCHTinit() { return; }
 void DGCHTfini() { return; }
@@ -38,18 +37,9 @@ node_st *DGCHTast(node_st *node)
     OUT("#include \"ccn/dynamic_core.h\"\n");
     OUT("#include \"ccn/phase_driver.h\"\n");
     OUT("#include \"ccngen/ast.h\"\n");
+    OUT("#include \"ccngen/name_util.h\"\n");
     OUT("#include \"palm/ctinfo.h\"\n");
     ast = node;
-    OUT_START_FUNC("char *nodetypeToName(node_st *node)");
-    OUT_BEGIN_SWITCH("NODE_TYPE(node)");
-    gen_type_names = true;
-    TRAVinodes(node);
-    OUT_BEGIN_DEFAULT_CASE();
-    OUT("return \"Unknown\";\n");
-    OUT_END_CASE_NO_BREAK();
-    OUT_END_SWITCH();
-    OUT_END_FUNC();
-    gen_type_names = false;
 
     TRAVopt(AST_INODESETS(node));
     TRAVopt(AST_INODES(node));
@@ -86,13 +76,6 @@ node_st *DGCHTipass(node_st *node)
 node_st *DGCHTinode(node_st *node)
 {
     GeneratorContext *ctx = globals.gen_ctx;
-    if (gen_type_names) {
-        OUT_BEGIN_CASE("NT_%s", ID_UPR(INODE_NAME(node)));
-        OUT_STATEMENT("return \"%s\"", ID_ORIG(INODE_NAME(node)));
-        OUT_END_CASE();
-        TRAVnext(node);
-        return node;
-    }
     struct data_dgcht *data = DATA_DGCHT_GET();
     data->lifetime_target = LT_NODE;
     curr_node = node;
