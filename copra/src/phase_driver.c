@@ -10,6 +10,7 @@
 #include "ccn/action_types.h"
 #include "ccn/dynamic_core.h"
 #include "ccngen/action_handling.h"
+#include "ccngen/name_util.h"
 #include "palm/ctinfo.h"
 #include "palm/memory.h"
 #include "ccn/phase_driver.h"
@@ -29,6 +30,7 @@ struct phase_driver {
     struct ccn_phase *current_phase;
     char *breakpoint;
     char *current_action_name;
+    struct ccn_node *root_node;
 };
 
 static struct phase_driver phase_driver = {
@@ -65,7 +67,6 @@ extern void BreakpointHandler(node_st *node);
 
 struct ccn_node *CCNdispatchAction(struct ccn_action *action, enum ccn_nodetype root_type, struct ccn_node *node,
                           bool is_root) {
-    // TODO: Handle TRAVstart/PASSstart being used directly to start another traversal/pass
     phase_driver.current_action_name = action->name;
     phase_driver.action_id++;
     // Needed to break after a phase with action ids.
@@ -301,6 +302,14 @@ void CCNsetTreeCheck(bool enable)
 }
 
 /**
+ * @brief Default print function for nodes.
+ */
+void CCNprintNode(void *node)
+{
+    fprintf(stderr, "%s", nodetypeToName((struct ccn_node *)node));
+}
+
+/**
  * Perform an invocation of your compiler.
  * @param node the root of the tree. Will call the free traversal at the end.
  */
@@ -309,6 +318,7 @@ void CCNrun(struct ccn_node *node)
     /* Initialize the memory manager */
     MEMmanagerInit();
     MEMsetCurrentActionNameFunction(&CCNgetCurrentActionName);
+    MEMsetNodePrintFunc(&CCNprintNode);
 
     /* Perform the compiler invocation */
     resetPhaseDriver();

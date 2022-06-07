@@ -4,7 +4,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "ccn/phase_driver.h"
+
 #include "ccngen/ast.h"
+#include "ccngen/name_util.h"
 
 #include "palm/memory.h"
 
@@ -17,26 +20,59 @@ void TRAVdataNOP(ccn_trav_st *trav)
 
 static ccn_trav_st *current_traversal;
 
-void TRAVpush(enum ccn_traversal_type trav_type) {
+void TRAVsetHandlerName(char *handler_name) {
+    if (MEMdoLeakDetection()
+        && current_traversal->trav_type != TRAV_CCN_mark
+        && current_traversal->trav_type != TRAV_check
+        && current_traversal->trav_type != TRAV_cpy
+        && current_traversal->trav_type != TRAV_free) {
+        MEMsetCurrentHandlerName(handler_name);
+    }
+}
+
+void TRAVmarkSpeculative(struct ccn_node *arg_node, int pass) {
+    if (MEMdoLeakDetection() && MEMdoLeakDetectionBetweenHandlers()
+        && current_traversal->trav_type != TRAV_CCN_mark
+        && current_traversal->trav_type != TRAV_check
+        && current_traversal->trav_type != TRAV_cpy
+        && current_traversal->trav_type != TRAV_free) {
+        MEMsetMarkSpeculative(pass);
+        TRAVstart(arg_node, TRAV_CCN_mark);
+        if (pass == 2) {
+            MEMcheck();
+        }
+        MEMsetMarkSpeculative(0);
+    }
+}
+
+void TRAVpush(enum ccn_traversal_type trav_type, struct ccn_node *syntaxtree) {
     ccn_trav_st *trav = MEMmalloc(sizeof(ccn_trav_st));
     trav->trav_type = trav_type;
     trav->prev = current_traversal;
     current_traversal = trav;
 
     ccn_trav_data_ft init_func = trav_data_init_vtable[trav_type];
-    // MEMsetCurrentHandlerName("Init");
+    char *handler_name_tmp = MEMgetCurrentHandlerName();
+    TRAVsetHandlerName("Init");
+    TRAVmarkSpeculative(syntaxtree, 1);
     init_func(trav);
+    TRAVmarkSpeculative(syntaxtree, 2);
+    TRAVsetHandlerName(handler_name_tmp);
 }
 
-void TRAVpop() {
+void TRAVpop(struct ccn_node *syntaxtree) {
     if (current_traversal == NULL) {
         err(EXIT_FAILURE, "[coconut] Error in framework.");
     }
     ccn_trav_st *prev = current_traversal->prev;
 
     ccn_trav_data_ft free_func = trav_data_free_vtable[current_traversal->trav_type];
-    // MEMsetCurrentHandlerName("Fini");
+    char *handler_name_tmp = MEMgetCurrentHandlerName();
+    TRAVsetHandlerName("Fini");
+    TRAVmarkSpeculative(syntaxtree, 1);
     free_func(current_traversal);
+    TRAVmarkSpeculative(syntaxtree, 2);
+    TRAVsetHandlerName(handler_name_tmp);
 
     MEMfree(current_traversal);
     current_traversal = prev;
@@ -49,19 +85,25 @@ ccn_trav_st *TRAVgetCurrent(void) { return current_traversal; }
  * This function requires that arg_node != NULL
  * */
 struct ccn_node *TRAVdo(struct ccn_node *arg_node) {
+    struct ccn_node *result;
     //assert(arg_node != NULL);
-    MEMsetCurrentHandlerName(NULL); // TODO: Set actual name
+    TRAVmarkSpeculative(arg_node, 1);
+    char *handler_name_tmp = MEMgetCurrentHandlerName();
+    TRAVsetHandlerName(handlerToName(current_traversal->trav_type, NODE_TYPE(arg_node)));
     ccn_trav_ft trav_func = ccn_trav_vtable[current_traversal->trav_type][NODE_TYPE(arg_node)];
-    return trav_func(arg_node);
+    result = trav_func(arg_node);
+    TRAVmarkSpeculative(result, 2);
+    TRAVsetHandlerName(handler_name_tmp);
+    return result;
 }
 
 /* Start new traversal and push it to the traversal stack */
 struct ccn_node *TRAVstart(struct ccn_node *syntaxtree, enum ccn_traversal_type trav_type) {
     bool temp_traversal_in_progress = MEMgetTraversalInProgress();
     MEMsetTraversalInProgress(true);
-    TRAVpush(trav_type);
+    TRAVpush(trav_type, syntaxtree);
     syntaxtree = TRAVopt(syntaxtree);
-    TRAVpop();
+    TRAVpop(syntaxtree);
     MEMsetTraversalInProgress(temp_traversal_in_progress);
     return syntaxtree;
 }
@@ -102,7 +144,7 @@ struct ccn_node *PASSstart(struct ccn_node *syntaxtree, enum ccn_pass_type pass_
 {
     bool temp_traversal_in_progress = MEMgetTraversalInProgress();
     MEMsetTraversalInProgress(true);
-    MEMsetCurrentHandlerName(NULL);
+    MEMsetCurrentHandlerName("N/A");
     struct ccn_node *node = ccn_pass_vtable[pass_type](syntaxtree);
     MEMsetTraversalInProgress(temp_traversal_in_progress);
 

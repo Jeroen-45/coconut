@@ -16,14 +16,14 @@ static node_st *DoInsert(node_st *literal, node_st *id)
     }
     DBUG("Inserting: %s\n", ID_LWR(id));
 
-    TRAVpush(TRAV_SLI);
+    TRAVpush(TRAV_SLI, literal);
     struct data_sli *data = DATA_SLI_GET();
     data->value = TRAVstart(id, TRAV_cpy);
     TRAVdo(literal);
     if (!data->inserted) {
         TRAVstart(data->value, TRAV_free);
     }
-    TRAVpop();
+    TRAVpop(literal);
 
     return literal;
 }
@@ -52,7 +52,7 @@ bool SETIDcontains(node_st *literal, node_st *id)
     bool found = false;
     printf("Checking: %s\n", ID_LWR(id));
 
-    TRAVpush(TRAV_SLC);
+    TRAVpush(TRAV_SLC, literal);
     {
         struct data_slc *data = DATA_SLC_GET();
         data->lookup = id;
@@ -60,7 +60,7 @@ bool SETIDcontains(node_st *literal, node_st *id)
         if (data->contains) {
             found = true;
         }
-    } TRAVpop();
+    } TRAVpop(literal);
     printf("Found: %d\n", found);
     return found;
 }
@@ -73,13 +73,13 @@ node_st *SETIDdifference(node_st *left, node_st *right)
     }
 
     node_st *new = NULL;
-    TRAVpush(TRAV_SLD);
+    TRAVpush(TRAV_SLD, left);
     {
         struct data_sld *data = DATA_SLD_GET();
         data->right = right;
         TRAVdo(left);
         new = data->new;
-    } TRAVpop();
+    } TRAVpop(left);
 
     return new;
 }
@@ -90,13 +90,13 @@ node_st *SETIDintersect(node_st *dst, node_st *src)
         return NULL;
     }
     node_st *new = NULL;
-    TRAVpush(TRAV_SLIS);
+    TRAVpush(TRAV_SLIS, dst);
     {
         struct data_slis *data = DATA_SLIS_GET();
         data->src = src;
         TRAVdo(dst);
         new = data->new;
-    } TRAVpop();
+    } TRAVpop(dst);
 
     return new;
 }
@@ -104,13 +104,13 @@ node_st *SETIDintersect(node_st *dst, node_st *src)
 node_st *SETIDunion(node_st *set1, node_st *set2)
 {
     node_st *new = NULL;
-    TRAVpush(TRAV_SLU);
+    TRAVpush(TRAV_SLU, NULL);
     {
         struct data_slu *data = DATA_SLU_GET();
         TRAVopt(set1);
         TRAVopt(set2);
         new = data->dst;
-    } TRAVpop();
+    } TRAVpop(NULL);
 
     return new;
 }

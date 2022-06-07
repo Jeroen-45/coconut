@@ -12,10 +12,14 @@ enum mem_type {
 };
 
 extern void MEMsetCurrentActionNameFunction(char *(*f)());
+extern void MEMsetNodePrintFunc(void (*f)(void *));
 extern bool MEMgetTraversalInProgress();
 extern void MEMsetTraversalInProgress(bool in_progress);
+extern void MEMsetMarkSpeculative(int mark_speculative);
+extern char *MEMgetCurrentHandlerName();
 extern void MEMsetCurrentHandlerName(char *name);
 extern bool MEMdoLeakDetection();
+extern bool MEMdoLeakDetectionBetweenHandlers();
 extern void MEMmanagerInit();
 extern void MEMmanagerCleanup();
 extern void *MEMmalloc(size_t size);

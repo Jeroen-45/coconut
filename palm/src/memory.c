@@ -17,30 +17,45 @@ struct mem_manager {
     char *(*getCurrentActionName)();
     linked_list_st *allocations_list;
     bool do_leak_detection;
+    bool do_leak_detection_between_handlers;
+    bool do_leak_reporting;
     bool do_garbage_collection;
     bool traversal_in_progress;
+    int mark_speculative;
     char *current_handler_name;
+    void (*nodePrintFunc)(void *);
 };
 
 /* Default function getCurrentActionName */
-char *actionNameUnknown() {
+char *actionNameUnknown(void *node) {
     return "Unknown";
+}
+
+/* Default function nodePrintFunc */
+void nodePrintNotSet() {
+    fprintf(stderr, "No print function set");
 }
 
 static struct mem_manager mem_manager = {
     .getCurrentActionName = actionNameUnknown,
     .allocations_list = NULL,
     .do_leak_detection = true,
+    .do_leak_detection_between_handlers = false,
+    .do_leak_reporting = false,
     .do_garbage_collection = true,
     .traversal_in_progress = false,
+    .mark_speculative = 0,
     .current_handler_name = NULL,
+    .nodePrintFunc = nodePrintNotSet,
 };
 
 struct mem_header {
     bool mark;
+    bool speculative_leaked;
     enum mem_type type;
     char *allocate_action_name;
     char *allocate_handler_name;
+    char *leak_handler_name;
 };
 
 /**
@@ -62,11 +77,19 @@ char *MEMtypeToName(enum mem_type type) {
 }
 
 /**
- * Set the Current Action Name Function object
+ * Set the Current Action Name Function
  * @param f The function to be used for retrieving the current action name
  */
 void MEMsetCurrentActionNameFunction(char *(*f)()) {
     mem_manager.getCurrentActionName = f;
+}
+
+/**
+ * Set the Node Print Function
+ * @param f The function to be used for printing node information
+ */
+void MEMsetNodePrintFunc(void (*f)(void *)) {
+    mem_manager.nodePrintFunc = f;
 }
 
 /**
@@ -84,15 +107,38 @@ void MEMsetTraversalInProgress(bool in_progress) {
 }
 
 /**
+ * Set the speculative mark mode flag.
+ */
+void MEMsetMarkSpeculative(int mark_speculative) {
+    mem_manager.mark_speculative = mark_speculative;
+}
+
+/**
+ * Get the current handler name
+ */
+char *MEMgetCurrentHandlerName() {
+    return mem_manager.current_handler_name;
+}
+
+/**
  * Set the current handler name
  */
 void MEMsetCurrentHandlerName(char *name) {
     mem_manager.current_handler_name = name;
 }
 
-/* Get do_leak_detection flag */
+/**
+ * Get do_leak_detection flag
+ */
 bool MEMdoLeakDetection() {
     return mem_manager.do_leak_detection;
+}
+
+/**
+ * Get do_leak_detection_between_handlers flag
+ */
+bool MEMdoLeakDetectionBetweenHandlers() {
+    return mem_manager.do_leak_detection_between_handlers;
 }
 
 /**
@@ -155,9 +201,11 @@ void *MEMmallocCallocGeneric(size_t size, size_t nitems, bool use_calloc)
 
         /* Set mem header values */
         header->mark = false;
+        header->speculative_leaked = false;
         header->type = MEM_TYPE_UNKNOWN;
         header->allocate_action_name = mem_manager.getCurrentActionName();
         header->allocate_handler_name = mem_manager.current_handler_name;
+        header->leak_handler_name = mem_manager.current_handler_name;
 
         /* Add address to list of managed addresses */
         mem_manager.traversal_in_progress = false;
@@ -265,7 +313,7 @@ void *MEMfree(void *address)
         if (LLremove(mem_manager.allocations_list, header)) {
             /* Memory is managed, free from start of header */
             address = (void *)header;
-        } else if (in_progress_temp) {
+        } else if (in_progress_temp && mem_manager.do_leak_reporting) {
             /* Memory is not managed, but traversal is in progress,
              * so this is either a double free or memory that wasn't
              * allocated with our functions when it should be. */
@@ -309,12 +357,22 @@ void MEMmark(void *address) {
     /* Check whether the address is actually managed */
     struct mem_header *header = MEM_HEADER(address);
     if (!LLin(mem_manager.allocations_list, header)) {
-        fprintf(stderr, "Error: memory found in the AST that was not allocated by MEM or STR functions.\n");
+        /* Memory is not managed, so this is memory that wasn't
+         * allocated with our functions when it should be. */
+        if (mem_manager.do_leak_reporting) {
+            fprintf(stderr, "Error: memory at address %p was not allocated by MEM or STR functions.\n", address);
+        }
         return;
     }
 
     /* Mark the address as being in use */
-    header->mark = true;
+    if (mem_manager.mark_speculative == 2) {
+        if (header->mark == true) {
+            header->mark = false;
+        }
+    } else {
+        header->mark = true;
+    }
 }
 
 /**
@@ -323,19 +381,43 @@ void MEMmark(void *address) {
  */
 void MEMcheckSingleEntry(void *address) {
     struct mem_header *header = (struct mem_header *)address;
+    if (mem_manager.mark_speculative) {
+        /* Speculative run, just set the probable source,
+         * don't consider the leak final yet */
+        if (header->mark && !header->speculative_leaked) {
+            /* Set the current handler name as the probable leak source */
+            header->leak_handler_name = mem_manager.current_handler_name;
+            header->speculative_leaked = true;
+        } else if (!header->mark && header->speculative_leaked) {
+            header->speculative_leaked = false;
+        }
+        header->mark = false;
+        return;
+    }
+
     if (!header->mark) {
         /* Report on leak */
-        // TODO: expand reporting
-        // fprintf(stderr, "Error: memory leak detected.\n");
-        // fprintf(stderr, "    Allocated in %s\n", header->allocate_action_name);
-        // fprintf(stderr, "    Leaked in %s\n", mem_manager.getCurrentActionName());
-        // fprintf(stderr, "    Type: %s\n", MEMtypeToName(header->type));
-        switch (header->type) {
-            case MEM_TYPE_STR:
-                // fprintf(stderr, "        String value: `%s`\n", (char *)MEM_DATA(address));
-                break;
-            default:
-                break;
+        if (mem_manager.do_leak_reporting) {
+            fprintf(stderr, "Error: memory leak detected.\n");
+            fprintf(stderr, "    Allocated in %s, handler: %s\n", header->allocate_action_name, header->allocate_handler_name);
+            if (mem_manager.do_leak_detection_between_handlers) {
+                fprintf(stderr, "    Leaked in %s, handler: %s\n", mem_manager.getCurrentActionName(), header->leak_handler_name);
+            } else {
+                fprintf(stderr, "    Leaked in %s\n", mem_manager.getCurrentActionName());
+            }
+            fprintf(stderr, "    Type: %s\n", MEMtypeToName(header->type));
+            switch (header->type) {
+                case MEM_TYPE_NODE:
+                    fprintf(stderr, "        Node info: ");
+                    mem_manager.nodePrintFunc(address);
+                    fprintf(stderr, "\n");
+                    break;
+                case MEM_TYPE_STR:
+                    fprintf(stderr, "        String value: `%s`\n", (char *)MEM_DATA(address));
+                    break;
+                default:
+                    break;
+            }
         }
 
         /* Free leaked memory if garbage collection is enabled */
