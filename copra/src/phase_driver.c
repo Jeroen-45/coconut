@@ -302,11 +302,11 @@ void CCNsetTreeCheck(bool enable)
 }
 
 /**
- * @brief Default print function for nodes.
+ * Default print function for nodes.
  */
 void CCNprintNode(void *node)
 {
-    fprintf(stderr, "%s", nodetypeToName((struct ccn_node *)node));
+    fprintf(stderr, "type: %s", nodetypeToName((struct ccn_node *)node));
 }
 
 /**

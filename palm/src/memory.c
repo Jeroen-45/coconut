@@ -432,7 +432,7 @@ void MEMcheckSingleEntry(void *address) {
             switch (header->type) {
                 case MEM_TYPE_NODE:
                     fprintf(stderr, "        Node info: ");
-                    mem_manager.nodePrintFunc(address);
+                    mem_manager.nodePrintFunc(MEM_DATA(header));
                     fprintf(stderr, "\n");
                     break;
                 case MEM_TYPE_STR:
