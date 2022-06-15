@@ -24,6 +24,7 @@ struct mem_manager {
     int mark_speculative;
     char *current_handler_name;
     void (*nodePrintFunc)(void *);
+    int handler_nesting_level;
 };
 
 /* Default function getCurrentActionName */
@@ -47,10 +48,11 @@ static struct mem_manager mem_manager = {
     .mark_speculative = 0,
     .current_handler_name = NULL,
     .nodePrintFunc = nodePrintNotSet,
+    .handler_nesting_level = 0,
 };
 
 struct mem_header {
-    bool mark;
+    int mark;
     bool speculative_leaked;
     enum mem_type type;
     char *allocate_action_name;
@@ -139,6 +141,20 @@ bool MEMdoLeakDetection() {
  */
 bool MEMdoLeakDetectionBetweenHandlers() {
     return mem_manager.do_leak_detection_between_handlers;
+}
+
+/**
+ * Increment the handler nesting level
+ */
+void MEMincrementHandlerNestingLevel() {
+    mem_manager.handler_nesting_level++;
+}
+
+/**
+ * Decrement the handler nesting level
+ */
+void MEMdecrementHandlerNestingLevel() {
+    mem_manager.handler_nesting_level--;
 }
 
 /**
@@ -366,9 +382,11 @@ void MEMmark(void *address) {
     }
 
     /* Mark the address as being in use */
-    if (mem_manager.mark_speculative == 2) {
-        if (header->mark == true) {
-            header->mark = false;
+    if (mem_manager.mark_speculative == 1) {
+        header->mark = mem_manager.handler_nesting_level;
+    } else if (mem_manager.mark_speculative == 2) {
+        if (header->mark == mem_manager.handler_nesting_level) {
+            header->mark--;
         }
     } else {
         header->mark = true;
@@ -384,14 +402,19 @@ void MEMcheckSingleEntry(void *address) {
     if (mem_manager.mark_speculative) {
         /* Speculative run, just set the probable source,
          * don't consider the leak final yet */
-        if (header->mark && !header->speculative_leaked) {
-            /* Set the current handler name as the probable leak source */
-            header->leak_handler_name = mem_manager.current_handler_name;
-            header->speculative_leaked = true;
-        } else if (!header->mark && header->speculative_leaked) {
+        if (header->mark == mem_manager.handler_nesting_level) {
+            if (!header->speculative_leaked) {
+                /* Set the current handler name as the probable leak source */
+                header->leak_handler_name = mem_manager.current_handler_name;
+                header->speculative_leaked = true;
+                header->mark = 0;
+            } else {
+                /* Set the mark int back down to the previous nesting level */
+                header->mark--;
+            }
+        } else if (header->mark == (mem_manager.handler_nesting_level - 1) && header->speculative_leaked) {
             header->speculative_leaked = false;
         }
-        header->mark = false;
         return;
     }
 

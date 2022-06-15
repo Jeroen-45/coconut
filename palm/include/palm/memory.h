@@ -20,6 +20,8 @@ extern char *MEMgetCurrentHandlerName();
 extern void MEMsetCurrentHandlerName(char *name);
 extern bool MEMdoLeakDetection();
 extern bool MEMdoLeakDetectionBetweenHandlers();
+extern void MEMincrementHandlerNestingLevel();
+extern void MEMdecrementHandlerNestingLevel();
 extern void MEMmanagerInit();
 extern void MEMmanagerCleanup();
 extern void *MEMmalloc(size_t size);

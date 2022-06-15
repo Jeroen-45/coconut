@@ -36,10 +36,14 @@ void TRAVmarkSpeculative(struct ccn_node *arg_node, int pass) {
         && current_traversal->trav_type != TRAV_check
         && current_traversal->trav_type != TRAV_cpy
         && current_traversal->trav_type != TRAV_free) {
+        if (pass == 1) {
+            MEMincrementHandlerNestingLevel();
+        }
         MEMsetMarkSpeculative(pass);
         TRAVstart(arg_node, TRAV_CCN_mark);
         if (pass == 2) {
             MEMcheck();
+            MEMdecrementHandlerNestingLevel();
         }
         MEMsetMarkSpeculative(0);
     }
