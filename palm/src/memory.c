@@ -25,6 +25,15 @@ struct mem_manager {
     char *current_handler_name;
     void (*nodePrintFunc)(void *);
     int handler_nesting_level;
+    int allocation_count;
+    int allocation_size_count;
+    int managed_allocation_count;
+    int managed_allocation_size_count;
+    int free_count;
+    int managed_free_count;
+    int managed_free_size_count;
+    int leak_count;
+    int leak_size_count;
 };
 
 /* Default function getCurrentActionName */
@@ -49,9 +58,19 @@ static struct mem_manager mem_manager = {
     .current_handler_name = NULL,
     .nodePrintFunc = nodePrintNotSet,
     .handler_nesting_level = 0,
+    .allocation_count = 0,
+    .allocation_size_count = 0,
+    .managed_allocation_count = 0,
+    .managed_allocation_size_count = 0,
+    .free_count = 0,
+    .managed_free_count = 0,
+    .managed_free_size_count = 0,
+    .leak_count = 0,
+    .leak_size_count = 0,
 };
 
 struct mem_header {
+    int size;
     int mark;
     bool speculative_leaked;
     enum mem_type type;
@@ -168,6 +187,25 @@ void MEMmanagerInit() {
  * Cleanup memory manager data
  */
 void MEMmanagerCleanup() {
+    /* Print statistics */
+    if (mem_manager.do_leak_reporting) {
+        printf("===================== Memory statistics =====================\n");
+        printf("             managed/total\n");
+        printf("Allocations: %d/%d (total size: %d/%d)\n", mem_manager.managed_allocation_count,
+                                                           mem_manager.allocation_count,
+                                                           mem_manager.managed_allocation_size_count,
+                                                           mem_manager.allocation_size_count);
+        printf("Frees:       %d/%d (total size: %d/Unknown)\n", mem_manager.managed_free_count,
+                                                                mem_manager.free_count,
+                                                                mem_manager.managed_free_size_count);
+        printf("-------------------------------------------------------------\n");
+        printf("             managed\n");
+        printf("Leaked:      %d (total size: %d)\n", mem_manager.leak_count,
+                                                     mem_manager.leak_size_count);
+        printf("=============================================================\n");
+    }
+
+    /* Cleanup adminstrative data */
     LLdelete(mem_manager.allocations_list);
 }
 
@@ -210,12 +248,21 @@ void *MEMmallocCallocGeneric(size_t size, size_t nitems, bool use_calloc)
         CTIabortOutOfMemory(size);
     }
 
+    /* Update statistics */
+    mem_manager.allocation_count++;
+    mem_manager.allocation_size_count += size;
+
     /* Set the mem_header values and update administrative structure
      * in case of managed allocation */
     if (mem_manager.traversal_in_progress && mem_manager.do_leak_detection) {
         struct mem_header *header = (struct mem_header *)ptr;
 
+        /* Update statistics */
+        mem_manager.managed_allocation_count++;
+        mem_manager.managed_allocation_size_count += size;
+
         /* Set mem header values */
+        header->size = size;
         header->mark = false;
         header->speculative_leaked = false;
         header->type = MEM_TYPE_UNKNOWN;
@@ -329,6 +376,10 @@ void *MEMfree(void *address)
         if (LLremove(mem_manager.allocations_list, header)) {
             /* Memory is managed, free from start of header */
             address = (void *)header;
+
+            /* Update statistics */
+            mem_manager.managed_free_count++;
+            mem_manager.managed_free_size_count += header->size;
         } else if (in_progress_temp && mem_manager.do_leak_reporting) {
             /* Memory is not managed, but traversal is in progress,
              * so this is either a double free or memory that wasn't
@@ -337,6 +388,9 @@ void *MEMfree(void *address)
         }
         mem_manager.traversal_in_progress = in_progress_temp;
     }
+
+    /* Update statistics */
+    mem_manager.free_count++;
 
     /* Free the memory */
     free(address);
@@ -419,6 +473,10 @@ void MEMcheckSingleEntry(void *address) {
     }
 
     if (!header->mark) {
+        /* Update statistics */
+        mem_manager.leak_count++;
+        mem_manager.leak_size_count += header->size;
+
         /* Report on leak */
         if (mem_manager.do_leak_reporting) {
             fprintf(stderr, "Error: memory leak detected.\n");
