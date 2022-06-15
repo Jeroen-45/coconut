@@ -480,25 +480,26 @@ void MEMcheckSingleEntry(void *address) {
         /* Report on leak */
         if (mem_manager.do_leak_reporting) {
             fprintf(stderr, "Error: memory leak detected.\n");
-            fprintf(stderr, "    Allocated in %s, handler: %s\n", header->allocate_action_name, header->allocate_handler_name);
+            fprintf(stderr, "    Allocated in \x1b[32m%s\x1b[0m, handler: \x1b[92m%s\x1b[0m\n", header->allocate_action_name, header->allocate_handler_name);
             if (mem_manager.do_leak_detection_between_handlers) {
-                fprintf(stderr, "    Leaked in %s, handler: %s\n", mem_manager.getCurrentActionName(), header->leak_handler_name);
+                fprintf(stderr, "    Leaked in \x1b[32m%s\x1b[0m, handler: \x1b[92m%s\x1b[0m\n", mem_manager.getCurrentActionName(), header->leak_handler_name);
             } else {
-                fprintf(stderr, "    Leaked in %s\n", mem_manager.getCurrentActionName());
+                fprintf(stderr, "    Leaked in \x1b[32m%s\x1b[0m\n", mem_manager.getCurrentActionName());
             }
-            fprintf(stderr, "    Type: %s\n", MEMtypeToName(header->type));
+            fprintf(stderr, "    Type: \x1b[34m%s\x1b[0m\n", MEMtypeToName(header->type));
             switch (header->type) {
                 case MEM_TYPE_NODE:
-                    fprintf(stderr, "        Node info: ");
+                    fprintf(stderr, "        Node info: \x1b[35m");
                     mem_manager.nodePrintFunc(MEM_DATA(header));
-                    fprintf(stderr, "\n");
+                    fprintf(stderr, "\x1b[0m\n");
                     break;
                 case MEM_TYPE_STR:
-                    fprintf(stderr, "        String value: `%s`\n", (char *)MEM_DATA(address));
+                    fprintf(stderr, "        String value: `\x1b[33m%s\x1b[0m`\n", (char *)MEM_DATA(address));
                     break;
                 default:
                     break;
             }
+            fprintf(stderr, "\n");
         }
 
         /* Free leaked memory if garbage collection is enabled */
