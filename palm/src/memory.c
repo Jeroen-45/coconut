@@ -192,11 +192,11 @@ void MEMmanagerCleanup() {
         printf("===================== Memory statistics =====================\n");
         printf("             managed/total\n");
         printf("Allocations: %d/%d (total size: %d/%d)\n", mem_manager.managed_allocation_count,
-                                                           mem_manager.allocation_count,
+                                                           mem_manager.allocation_count - mem_manager.managed_allocation_count,
                                                            mem_manager.managed_allocation_size_count,
-                                                           mem_manager.allocation_size_count);
+                                                           mem_manager.allocation_size_count - mem_manager.managed_allocation_size_count);
         printf("Frees:       %d/%d (total size: %d/Unknown)\n", mem_manager.managed_free_count,
-                                                                mem_manager.free_count,
+                                                                mem_manager.free_count - mem_manager.managed_free_count,
                                                                 mem_manager.managed_free_size_count);
         printf("-------------------------------------------------------------\n");
         printf("             managed\n");
